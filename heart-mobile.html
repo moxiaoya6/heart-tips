@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>💖 爱心提示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            touch-action: none;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .tip-window {
+            position: fixed;
+            width: 85vw;
+            max-width: 300px;
+            min-height: 50px;
+            padding: 12px 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1.4;
+            z-index: 10000;
+            animation: fadeIn 0.4s ease-out;
+            touch-action: none;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.7) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20000;
+            background: rgba(255,255,255,0.95);
+            padding: 12px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 90%;
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .controls button:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        
+        .controls button.stop {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30000;
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .loading.show {
+            opacity: 1;
+        }
+        
+        .loading-text {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        /* 防止页面滚动 */
+        @media (max-width: 768px) {
+            body {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div>💖</div>
+        <div class="loading-text">正在加载...</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="startRandom()">🎲 开始随机提示</button>
+        <button class="stop" onclick="stopAll()">⏹ 停止所有</button>
+    </div>
+
+    <script>
+        const tips = [
+            '多喝水哦～', '保持微笑呀', '每天都要元气满满', '记得吃水果', '保持好心情', '好好爱自己',
+            '我想你了', '梦想成真', '期待下一次见面', '金榜题名', '顺顺利利', '早点休息',
+            '愿所有烦恼都消失', '别熬夜', '今天过得开心嘛', '天冷了，多穿衣服', '三餐要按时吃呀',
+            '累了就歇会儿，别硬扛', '记得涂防晒呀', '走路慢一点，注意安全', '多去晒晒太阳吧',
+            '眼睛累了就看看远方', '好好刷牙，爱护牙齿', '少喝冰的，对胃好', '你真的很棒呀', '有我陪着你呢',
+            '我会一直想你', '你值得被偏爱', '见到你就很开心', '和你在一起真好', '你笑起来超好看',
+            '谢谢你出现在我身边', '平安喜乐常伴你', '万事顺心无波澜', '日子温柔又闪亮', '一路繁花一路歌',
+            '所遇皆温柔，所行皆坦途', '未来光芒万丈呀', '每段时光都有惊喜', '慢慢变好，不负韶华',
+            '冲呀，你超厉害的', '今天也要加油呀', '元气值满格啦', '烦恼都随风飘走', '快乐会不请自来',
+            '做自己超酷的', '每天都有小幸运', '把快乐装进口袋'
+        ];
+        
+        const bgColors = [
+            '#FFB6C1', '#87CEEB', '#90EE90', '#E6E6FA',
+            '#FFFFE0', '#DDA0DD', '#FF7F50', '#FFE4C4',
+            '#7FFFD4', '#FFE4E1', '#F0FFF0', '#FFF0F5',
+            '#FDF5E6'
+        ];
+        
+        let randomInterval = null;
+        let tipWindows = [];
+        let running = true;
+        
+        // 获取屏幕尺寸（考虑安全区域）
+        function getScreenSize() {
+            const width = window.innerWidth || document.documentElement.clientWidth;
+            const height = window.innerHeight || document.documentElement.clientHeight;
+            return { width, height };
+        }
+        
+        function createTipWindow(text, bgColor, x, y) {
+            const tip = document.createElement('div');
+            tip.className = 'tip-window';
+            tip.textContent = text;
+            tip.style.backgroundColor = bgColor;
+            tip.style.left = x + 'px';
+            tip.style.top = y + 'px';
+            tip.style.color = '#333';
+            
+            // 点击关闭
+            tip.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                this.remove();
+                const index = tipWindows.indexOf(this);
+                if (index > -1) {
+                    tipWindows.splice(index, 1);
+                }
+            });
+            
+            tip.addEventListener('click', function() {
+                this.remove();
+                const index = tipWindows.indexOf(this);
+                if (index > -1) {
+                    tipWindows.splice(index, 1);
+                }
+            });
+            
+            document.body.appendChild(tip);
+            tipWindows.push(tip);
+            
+            // 25秒后自动关闭
+            setTimeout(() => {
+                if (tip.parentNode) {
+                    tip.style.animation = 'fadeOut 0.3s ease-out forwards';
+                    setTimeout(() => {
+                        if (tip.parentNode) {
+                            tip.remove();
+                            const index = tipWindows.indexOf(tip);
+                            if (index > -1) {
+                                tipWindows.splice(index, 1);
+                            }
+                        }
+                    }, 300);
+                }
+            }, 25000);
+        }
+        
+        function startRandom() {
+            if (randomInterval) {
+                clearInterval(randomInterval);
+            }
+            
+            running = true;
+            let count = 0;
+            
+            randomInterval = setInterval(() => {
+                if (!running || count >= 50) {
+                    clearInterval(randomInterval);
+                    return;
+                }
+                
+                const { width: screenWidth, height: screenHeight } = getScreenSize();
+                const windowWidth = Math.min(300, screenWidth * 0.85);
+                const windowHeight = 60;
+                
+                const x = Math.random() * (screenWidth - windowWidth - 20) + 10;
+                const y = Math.random() * (screenHeight - windowHeight - 120) + 10; // 留出控制按钮空间
+                
+                const tip = tips[Math.floor(Math.random() * tips.length)];
+                const bg = bgColors[Math.floor(Math.random() * bgColors.length)];
+                
+                createTipWindow(tip, bg, x, y);
+                count++;
+            }, 80);
+        }
+        
+        function stopAll() {
+            running = false;
+            if (randomInterval) {
+                clearInterval(randomInterval);
+                randomInterval = null;
+            }
+            
+            // 关闭所有提示窗口
+            tipWindows.forEach(tip => {
+                if (tip.parentNode) {
+                    tip.style.animation = 'fadeOut 0.3s ease-out forwards';
+                    setTimeout(() => {
+                        if (tip.parentNode) {
+                            tip.remove();
+                        }
+                    }, 300);
+                }
+            });
+            tipWindows = [];
+        }
+        
+        // 防止页面滚动
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.tip-window') || e.target.closest('.controls')) {
+                return;
+            }
+            e.preventDefault();
+        }, { passive: false });
+        
+        // 防止双击缩放
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // 页面加载完成后自动开始
+        window.addEventListener('load', function() {
+            // 隐藏加载提示
+            setTimeout(() => {
+                document.getElementById('loading').classList.remove('show');
+                setTimeout(() => {
+                    startRandom();
+                }, 500);
+            }, 1000);
+        });
+        
+        // 处理屏幕旋转
+        window.addEventListener('resize', function() {
+            // 重新计算位置（可选）
+        });
+        
+        // 添加fadeOut动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
+
